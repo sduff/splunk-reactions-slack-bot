@@ -9,37 +9,19 @@ const bodyParser = require('body-parser');
 const app = express();
 
 
-var reactions = [
-    {
-      "text":"splunk cloud",
-      "tags":"cloud",
-      "url":"http://google.com",
-			"image_url": "https://media.giphy.com/media/L2O7BkpWfxDpdS8dSd/giphy.gif"
-    },
-    {
-      "text":"pipeline",
-      "tags":"",
-      "url":"http://google.com",
-			"image_url": "https://media.giphy.com/media/L2O7BkpWfxDpdS8dSd/giphy.gif"
-    },
-      {
-      "text":"",
-      "tags":"smoke",
-      "url":"http://google.com",
-			"image_url": "https://media.giphy.com/media/L2O7BkpWfxDpdS8dSd/giphy.gif"
-    }
-];
-                            
+var reactions = require("./../reactions.js").reactions;
+                   
 var options = {
   shouldSort: true,
-  threshold: 0.6,
+  tokenize: true,
+  matchAllTokens: true,
+  threshold: 0.3,
   location: 0,
   distance: 100,
   maxPatternLength: 32,
-  minMatchCharLength: 1,
+  minMatchCharLength: 2,
   keys: [
-    {name:"text", weight:0.7},
-    {name:"tags", weight:0.3}
+    "text"
   ]
 };
 
@@ -48,40 +30,39 @@ var fuse = new Fuse(reactions, options);
 // since x-www-form-urlencoded is used for request body
 app.use(bodyParser.urlencoded({ extended: false }));
 
-app.post("/react", (req, res, done) => { 
-    console.log('Got a /react post', req);
+app.post("/splunkreaction", (req, res, done) => { 
+    console.log('Got a /splunkreaction post', req);
 
     let token = req.body && req.body.token;
     
-    var result = fuse.search(req.body.text);
-    if(result.length>0) {
-      result = result[0];
+    var result = fuse.search(req.body.text.trim());
+
+    var select_result = "";
+  
+    if(result.length==0 || req.body.text == "") {
+      // random
+      select_result = reactions[Math.floor(Math.random() * reactions.length)];
+      select_result.text = "(Random Reaction) "+ select_result.text;
     } else {
-      result = reactions[Math.floor(Math.random() * reactions.length)];
+      // choose from top results
+      select_result = result[Math.floor(Math.random() * result.length)];
     }
-    console.log(result);
     
+    console.log(select_result);
+  
     res.send({
       "response_type": "in_channel",
-      "text": result.text,
+
       "attachments": [
         {
+          "title": select_result.text,
+          "title_link": select_result.url,
           "fallback": "Imagine a funny, yet relevant, image here",
-          "image_url": result.image_url
+          "image_url": select_result.image_url
         }
       ]
     });
-    /*
-    "text": "When you’ve finished a health check, and you’re about to tell the customer about your findings…",
-    "attachments": [
-        {
-			"fallback": "Hilarious image goes here",
-			"image_url": "https://media.giphy.com/media/L2O7BkpWfxDpdS8dSd/giphy.gif"
-        }
-    ]
-}
-  
-    */
+    
 });
 
 app.get("/keepalive", (req,res,done) => {
