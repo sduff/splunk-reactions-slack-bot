@@ -1,6 +1,7 @@
 const http = require('http');
 const Fuse = require('fuse.js')
 const request = require('request')
+const fs = require('fs')
 
 require('dotenv').config();
 
@@ -9,6 +10,10 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
 
+  var now = new Date().toUTCString();
+  var log_string = `${now} SLACK BOT STARTED\n`;
+  
+  fs.appendFileSync('.data/usage.log', log_string);
 
 var reactions = require("./../reactions.js").reactions;
                    
@@ -63,6 +68,16 @@ app.post("/splunkreaction", (req, res, done) => {
         }
       ]
     });
+  
+  var now = new Date().toUTCString();
+  var user = req.body.user_name;
+  var channel = req.body.channel_name;
+  var instance = req.body.team_domain;
+  var text = req.body.text;
+  var id = select_result.url;
+  var log_string = `${now} ${user} in ${channel} on ${instance} requested ${text} and I gave ${id}\n`;
+  
+  fs.appendFileSync('.data/usage.log', log_string);
     
 });
 
