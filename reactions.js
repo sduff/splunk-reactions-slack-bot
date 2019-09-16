@@ -3,7 +3,7 @@ var reactions = [
         "text": "How excited people are to start using Splunk Cloud",
         "url": "https://splunkreactions.tumblr.com/post/162940444925.html",
         "image_url": "https://66.media.tumblr.com/78281534a2b19962757993afdc92b8fb/tumblr_os7pin87zH1tc51gko1_250.gif",
-        "tags": ""
+        "tags": "smoke"
     },
 
    {

@@ -1,7 +1,5 @@
 const http = require('http');
-const Fuse = require('fuse.js')
 const request = require('request')
-const fs = require('fs')
 
 require('dotenv').config();
 
@@ -10,28 +8,21 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
 
-  var now = new Date().toUTCString();
-  var log_string = `${now} SLACK BOT STARTED\n`;
-  
-  fs.appendFileSync('.data/usage.log', log_string);
 
 var reactions = require("./../reactions.js").reactions;
-                   
-var options = {
-  shouldSort: true,
-  tokenize: true,
-  matchAllTokens: true,
-  threshold: 0.3,
-  location: 0,
-  distance: 100,
-  maxPatternLength: 32,
-  minMatchCharLength: 2,
-  keys: [
-    "text"
-  ]
-};
 
-var fuse = new Fuse(reactions, options);
+// add words from the text of the reaction to any tags
+reactions.forEach( function(r) {
+  var t = r.text + r.tags
+  var new_tags = (t)
+                .replace(/[.,?!;()"'-]/g, " ")
+                .replace(/\s+/g, " ")
+                .toLowerCase()
+                .trim()
+                .split(" ")
+                .filter(function(v,i,self) {return self.indexOf(v) === i});
+  r.tags = new_tags
+})
 
 // since x-www-form-urlencoded is used for request body
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -40,21 +31,40 @@ app.post("/splunkreaction", (req, res, done) => {
     console.log('Got a /splunkreaction post', req);
 
     let token = req.body && req.body.token;
-    
-    var result = fuse.search(req.body.text.trim());
 
-    var select_result = "";
   
+  
+    // go through each reaction and find the best matches
+    var search_terms = (req.body.text)
+                .replace(/[.,?!;()"'-]/g, " ")
+                .replace(/\s+/g, " ")
+                .toLowerCase()
+                .trim()
+                .split(" ")
+                .filter(function(v,i,self) {return self.indexOf(v) === i});
+
+    var result = reactions.filter( function (e) {
+      for (var word of search_terms) {
+        if (e.tags.indexOf(word) == -1) {
+          return false;
+        }
+      }
+      return true;
+    })
+      
+    var select_result = "", footer = "";
     if(result.length==0 || req.body.text == "") {
       // random
       select_result = reactions[Math.floor(Math.random() * reactions.length)];
       select_result.text = "(Random Reaction) "+ select_result.text;
+      footer = search_terms.join(' ') + " _(0)_ "+select_result.url
     } else {
       // choose from top results
       select_result = result[Math.floor(Math.random() * result.length)];
+      footer = search_terms.join(' ') + " _(1/"+result.length+")_ "+select_result.url
     }
     
-    console.log(select_result);
+    console.log(footer);
   
     res.send({
       "response_type": "in_channel",
@@ -64,20 +74,11 @@ app.post("/splunkreaction", (req, res, done) => {
           "title": select_result.text,
           "title_link": select_result.url,
           "fallback": "Imagine a funny, yet relevant, image here",
-          "image_url": select_result.image_url
+          "image_url": select_result.image_url,
+          "footer": footer
         }
       ]
     });
-  
-  var now = new Date().toUTCString();
-  var user = req.body.user_name;
-  var channel = req.body.channel_name;
-  var instance = req.body.team_domain;
-  var text = req.body.text;
-  var id = select_result.url;
-  var log_string = `${now} ${user} in ${channel} on ${instance} requested ${text} and I gave ${id}\n`;
-  
-  fs.appendFileSync('.data/usage.log', log_string);
     
 });
 
