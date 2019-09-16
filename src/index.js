@@ -1,5 +1,6 @@
 const http = require('http');
 const request = require('request')
+const fs = require('fs')
 
 require('dotenv').config();
 
@@ -8,6 +9,12 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
 
+function log(msg) {
+  var now = new Date().toISOString()
+  fs.appendFileSync('.data/usage.log', `${now} ${msg}\n`)
+}
+
+log("Slack Bot is starting")
 
 var reactions = require("./../reactions.js").reactions;
 
@@ -30,9 +37,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.post("/splunkreaction", (req, res, done) => { 
     console.log('Got a /splunkreaction post', req);
 
-    let token = req.body && req.body.token;
-
-  
+    let token = req.body && req.body.token; 
   
     // go through each reaction and find the best matches
     var search_terms = (req.body.text)
@@ -64,7 +69,9 @@ app.post("/splunkreaction", (req, res, done) => {
       footer = search_terms.join(' ') + " _(1/"+result.length+")_ "+select_result.url
     }
     
-    console.log(footer);
+    console.log(req);
+  
+    log(`${req.body.user_name} in ${req.body.channel_name} on ${req.body.team_domain} said "${req.body.text}". I returned ${footer}`)
   
     res.send({
       "response_type": "in_channel",

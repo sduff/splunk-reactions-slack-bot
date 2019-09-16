@@ -3,7 +3,6 @@ dependencies:
   body-parser: 1.18.3
   dotenv: 4.0.0
   express: 4.16.3
-  lunr: 2.3.6
   node-json-db: 0.7.5
   querystring: 0.2.0
   request: 2.88.0
@@ -449,10 +448,6 @@ packages:
       '0': node >=0.6.0
     resolution:
       integrity: sha1-MT5mvB5cwG5Di8G3SZwuXFastqI=
-  /lunr/2.3.6:
-    dev: false
-    resolution:
-      integrity: sha512-swStvEyDqQ85MGpABCMBclZcLI/pBIlu8FFDtmX197+oEgKloJ67QnB+Tidh0340HmLMs39c4GrkPY3cmkXp6Q==
   /media-typer/0.3.0:
     dev: false
     engines:
@@ -812,7 +807,6 @@ specifiers:
   body-parser: ^1.18.3
   dotenv: ^4.0.0
   express: ^4.16.3
-  lunr: ''
   node-json-db: ^0.7.3
   querystring: ^0.2.0
   request: ^2.88.0
